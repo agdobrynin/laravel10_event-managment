@@ -2,7 +2,11 @@
 
 namespace App\Exceptions;
 
+use App\Dto\ApiErrorResponseDto;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
+use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Throwable;
 
 class Handler extends ExceptionHandler
@@ -24,7 +28,17 @@ class Handler extends ExceptionHandler
     public function register(): void
     {
         $this->reportable(function (Throwable $e) {
-            //
+        });
+
+        $this->renderable(function (Throwable $e, Request $request) {
+            if ($request->expectsJson() && $e->getPrevious() instanceof ModelNotFoundException) {
+
+                $error = new ApiErrorResponseDto(
+                    $e->getPrevious()->getModel().' not found by id ' . implode(',', $e->getPrevious()->getIds())
+                );
+
+                return response()->json((array)$error, Response::HTTP_NOT_FOUND);
+            }
         });
     }
 }

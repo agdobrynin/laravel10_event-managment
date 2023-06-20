@@ -13,12 +13,17 @@ class Event extends Model
 
     protected $fillable = ['name', 'description', 'start_time', 'end_time'];
 
+    protected $casts = [
+        'start_time' => 'datetime:Y-m-d H:i',
+        'end_time' => 'datetime:Y-m-d H:i',
+    ];
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
-    public function attendee(): HasMany
+    public function attendees(): HasMany
     {
         return $this->hasMany(Attendee::class);
     }
