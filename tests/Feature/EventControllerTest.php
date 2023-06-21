@@ -34,8 +34,7 @@ class EventControllerTest extends TestCase
 
 
         $this->getJson('/api/events')
-            ->assertOk()
-            ->assertJsonCount(2, 'data.0.attendees')
+            ->assertJsonPath('data.0.countAttendees', 2)
             ->assertJsonStructure([
                 'data' => [
                     '*' => [
@@ -48,15 +47,7 @@ class EventControllerTest extends TestCase
                             'id',
                             'name'
                         ],
-                        'attendees' => [
-                            '*' => [
-                                'id',
-                                'user' => [
-                                    'id',
-                                    'name'
-                                ]
-                            ]
-                        ]
+                        'countAttendees',
                     ]
                 ]
             ])
@@ -198,7 +189,6 @@ class EventControllerTest extends TestCase
 
         $this->getJson('/api/events/' . $event->id)
             ->assertOk()
-            ->assertJsonCount(4, 'data.attendees')
             ->assertJson(function (AssertableJson $json) use ($event, $user) {
                 $json->where('data.id', fn(int $id) => $id === $event->id)
                     ->where('data.name', fn(string $name) => $name === $event->name)
@@ -206,10 +196,7 @@ class EventControllerTest extends TestCase
                     ->where('data.startTime', fn(string $value) => (bool)preg_match(self::datePattern, $value))
                     ->where('data.endTime', fn(string $value) => (bool)preg_match(self::datePattern, $value))
                     ->where('data.user.id', fn(int $id) => $id === $user->id)
-                    ->where('data.user.name', fn(string $name) => $name === $user->name)
-                    ->whereType('data.attendees.0.id', 'integer')
-                    ->whereType('data.attendees.0.user.id', 'integer')
-                    ->whereType('data.attendees.0.user.name', 'string');
+                    ->where('data.user.name', fn(string $name) => $name === $user->name);
             });
     }
 
