@@ -26,6 +26,9 @@ class EventResource extends JsonResource
             'endTime' => $this->end_time->format(self::DATE_FORMAT),
             'user' => new EventUserResource($this->whenLoaded('user')),
             'attendees' => AttendeeResource::collection($this->whenLoaded('attendees')),
+            $this->mergeWhen(!is_null($this->attendees_count), fn() => [
+                'countAttendees' => $this->attendees_count,
+            ]),
             'createdAt' => $this->created_at->format(self::DATE_FORMAT_TECH),
             'updatedAt' => $this->updated_at->format(self::DATE_FORMAT_TECH),
         ];

@@ -4,47 +4,60 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\AttendeeResource;
+use App\Models\Attendee;
+use App\Models\Event;
+use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Http\Response;
 
 class AttendeeController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Event $event): AnonymousResourceCollection
     {
-        //
+        $attendees = $event->attendees()
+            ->with('user')
+            ->latest()
+            ->paginate();
+
+        return AttendeeResource::collection($attendees);
     }
 
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(Request $request, Event $event): AttendeeResource
     {
-        //
+        $user = User::findOrFail(1); // TODO make from Request
+        $attendee = new Attendee();
+        $attendee->event()->associate($event);
+        $attendee->user()->associate($user);
+        $attendee->save();
+
+        return new AttendeeResource($attendee);
     }
 
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show(Event $event, Attendee $attendee): AttendeeResource
     {
-        //
-    }
+        $attendee->loadMissing('user');
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
-    {
-        //
+        return new AttendeeResource($attendee);
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy(Event $event, Attendee $attendee): Response
     {
-        //
+        $attendee->delete();
+
+        return response()->noContent();
     }
 }

@@ -5,7 +5,8 @@ namespace App\Http\Controllers\Api;
 
 use App\Dto\EventDto;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\EventRequest;
+use App\Http\Requests\EventStoreRequest;
+use App\Http\Requests\EventUpdateRequest;
 use App\Http\Resources\EventResource;
 use App\Models\Event;
 use App\Models\User;
@@ -19,7 +20,7 @@ class EventController extends Controller
      */
     public function index(): AnonymousResourceCollection
     {
-        $query = Event::with(['user', 'attendees.user'])
+        $query = Event::with(['user'])->withCount(['attendees'])
             ->orderBy('start_time', 'desc');
 
         return EventResource::collection($query->get());
@@ -28,12 +29,11 @@ class EventController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(EventRequest $request): EventResource
+    public function store(EventStoreRequest $request): EventResource
     {
         $user = User::findOrFail(1); // TODO make from Request
-        $eventDto = new EventDto(...$request->validated());
 
-        $event = new Event($eventDto->scalarOrNullValueToSnakeKeyArray());
+        $event = new Event($request->validatedToSnake());
         $event->user()->associate($user);
         $event->save();
 
@@ -45,7 +45,7 @@ class EventController extends Controller
      */
     public function show(Event $event): EventResource
     {
-        $event->loadMissing(['user', 'attendees.user']);
+        $event->loadMissing(['user']);
 
         return new EventResource($event);
     }
@@ -53,10 +53,9 @@ class EventController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(EventRequest $request, Event $event): EventResource
+    public function update(EventUpdateRequest $request, Event $event): EventResource
     {
-        $eventDto = new EventDto(...$request->validated());
-        $event->update($eventDto->scalarOrNullValueToSnakeKeyArray());
+        $event->update($request->validatedToSnake());
 
         return new EventResource($event);
     }

@@ -3,10 +3,13 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
+use App\Traits\ValidatedRequestConvertArray;
 use Illuminate\Foundation\Http\FormRequest;
 
-class EventRequest extends FormRequest
+class EventStoreRequest extends FormRequest
 {
+    use ValidatedRequestConvertArray;
+
     /**
      * Determine if the user is authorized to make this request.
      */
