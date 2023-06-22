@@ -3,13 +3,15 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api;
 
-use App\Dto\EventDto;
+use App\Enum\EventLoadRelationEnum;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\EventLoadRelationRequest;
 use App\Http\Requests\EventStoreRequest;
 use App\Http\Requests\EventUpdateRequest;
 use App\Http\Resources\EventResource;
 use App\Models\Event;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Response;
 
@@ -18,10 +20,22 @@ class EventController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index(): AnonymousResourceCollection
+    public function index(EventLoadRelationRequest $request): AnonymousResourceCollection
     {
-        $query = Event::with(['user'])->withCount(['attendees'])
-            ->orderBy('start_time', 'desc');
+        $query = Event::query();
+
+        foreach ($request->validated('relation', []) as $relation) {
+            $query->when(
+                $relation !== EventLoadRelationEnum::ATTENDEES_COUNT->value,
+                fn(Builder $builder) => $builder->with($relation)
+            );
+
+            if ($relation === EventLoadRelationEnum::ATTENDEES_COUNT->value) {
+                $query->withCount(EventLoadRelationEnum::ATTENDEES->value);
+            }
+        }
+
+        $query = $query->orderBy('start_time', 'desc');
 
         return EventResource::collection($query->get());
     }
