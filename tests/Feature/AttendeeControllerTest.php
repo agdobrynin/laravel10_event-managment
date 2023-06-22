@@ -112,6 +112,53 @@ class AttendeeControllerTest extends TestCase
             });
     }
 
+    public function testAttendeeStoreSuccess(): void
+    {
+        // TODO remove this when realize token auth.
+        User::factory()->create(['id' => 1]);
+        $event = Event::factory()->for(User::factory())->create();
+        $this->postJson("/api/events/{$event->id}/attendees")
+            ->assertCreated()
+            ->assertJsonStructure([
+                'data' => ['id', 'user' => ['id', 'name']]
+            ]);
+    }
+
+    public function testAttendeeStoreNotFound(): void
+    {
+        // TODO remove this when realize token auth.
+        $this->postJson("/api/events/11111111111111/attendees")
+            ->assertNotFound()
+            ->assertJsonStructure(['message']);
+    }
+
+    public function testAttendeeDestroyNotFound(): void
+    {
+        // TODO remove this when realize token auth.
+        $this->deleteJson("/api/events/11111111111111/attendees/1111111")
+            ->assertNotFound()
+            ->assertJsonStructure(['message']);
+    }
+
+    public function testAttendeeDestroyNotFoundWhenAttendeeNotBelongToEvent(): void
+    {
+        $event1 = $this->makeEventWithAttendees(1);
+        $event2 = $this->makeEventWithAttendees(1);
+
+        $this->deleteJson("/api/events/{$event1->id}/attendees/{$event2->attendees()->first()->id}")
+            ->assertNotFound()
+            ->assertJsonStructure(['message']);
+    }
+
+    public function testAttendeeDestroySuccess(): void
+    {
+        // TODO remove this when realize token auth.
+        $event  = $this->makeEventWithAttendees(1);
+
+        $this->deleteJson("/api/events/{$event->id}/attendees/{$event->attendees()->first()->id}")
+            ->assertNoContent();
+    }
+
     protected function makeEventWithAttendees(int $attendeeCount): Event
     {
         return Event::factory()

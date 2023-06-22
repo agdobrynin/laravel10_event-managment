@@ -33,10 +33,9 @@ class AttendeeController extends Controller
     public function store(Request $request, Event $event): AttendeeResource
     {
         $user = User::findOrFail(1); // TODO make from Request
-        $attendee = new Attendee();
-        $attendee->event()->associate($event);
-        $attendee->user()->associate($user);
-        $attendee->save();
+        /** @var Attendee $attendee */
+        $attendee = $event->attendees()->make();
+        $attendee->user()->associate($user)->save();
 
         return new AttendeeResource($attendee);
     }
