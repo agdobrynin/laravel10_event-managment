@@ -83,7 +83,7 @@ class AttendeeControllerTest extends TestCase
             ->assertJsonCount(3, 'data');
     }
 
-    public function testAttendeeShowNotBelongToByRouteScope(): void
+    public function testAttendeeShowNotBelongToEventSuccess(): void
     {
         $eventFirst = $this->makeEventWithAttendees(1);
         $eventSecond = $this->makeEventWithAttendees(1);
@@ -91,8 +91,16 @@ class AttendeeControllerTest extends TestCase
         $attendeeFromEventSecond = $eventSecond->attendees->first();
 
         $this->getJson("/api/events/{$eventFirst->id}/attendees/{$attendeeFromEventSecond->id}")
-            ->assertNotFound()
-            ->assertJsonStructure(['message']);
+            ->assertOk()
+            ->assertJson([
+                'data' => [
+                    'id' => $attendeeFromEventSecond->id,
+                    'user' => [
+                        'id' => $attendeeFromEventSecond->user->id,
+                        'name' => $attendeeFromEventSecond->user->name,
+                    ]
+                ],
+            ]);
     }
 
     public function testAttendeeShowSuccess(): void
@@ -140,20 +148,10 @@ class AttendeeControllerTest extends TestCase
             ->assertJsonStructure(['message']);
     }
 
-    public function testAttendeeDestroyNotFoundWhenAttendeeNotBelongToEvent(): void
-    {
-        $event1 = $this->makeEventWithAttendees(1);
-        $event2 = $this->makeEventWithAttendees(1);
-
-        $this->deleteJson("/api/events/{$event1->id}/attendees/{$event2->attendees()->first()->id}")
-            ->assertNotFound()
-            ->assertJsonStructure(['message']);
-    }
-
     public function testAttendeeDestroySuccess(): void
     {
         // TODO remove this when realize token auth.
-        $event  = $this->makeEventWithAttendees(1);
+        $event = $this->makeEventWithAttendees(1);
 
         $this->deleteJson("/api/events/{$event->id}/attendees/{$event->attendees()->first()->id}")
             ->assertNoContent();

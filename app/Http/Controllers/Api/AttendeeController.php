@@ -43,7 +43,7 @@ class AttendeeController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Event $event, Attendee $attendee): AttendeeResource
+    public function show(int $eventId, Attendee $attendee): AttendeeResource
     {
         $attendee->loadMissing('user');
 
@@ -53,7 +53,7 @@ class AttendeeController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Event $event, Attendee $attendee): Response
+    public function destroy(int $eventId, Attendee $attendee): Response
     {
         $attendee->delete();
 
