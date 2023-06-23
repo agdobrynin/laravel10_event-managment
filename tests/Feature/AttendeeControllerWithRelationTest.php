@@ -1,6 +1,5 @@
 <?php
 
-namespace Tests\Feature;
 
 use App\Models\Attendee;
 use App\Models\Event;
@@ -9,7 +8,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Testing\Fluent\AssertableJson;
 use Tests\TestCase;
 
-class AttendeeControllerTest extends TestCase
+class AttendeeControllerWithRelationTest extends TestCase
 {
     use RefreshDatabase;
 
@@ -18,16 +17,25 @@ class AttendeeControllerTest extends TestCase
     /**
      * A basic feature test example.
      */
-    public function testAttendeesFromEventSuccess(): void
+    public function testAttendeesFromEventWithRationsSuccess(): void
     {
-        $event = $this->makeEventWithAttendees(18);
+        $event = Event::factory()
+            ->for(User::factory())
+            ->has(
+                Attendee::factory(18)->for(User::factory())
+            )
+            ->create();
 
-        $this->getJson("/api/events/{$event->id}/attendees")
+        $this->getJson("/api/events/{$event->id}/attendees?relation[]=user")
             ->assertOk()
             ->assertJsonStructure([
                 'data' => [
                     '*' => [
                         'id',
+                        'user' => [
+                            'id',
+                            'name'
+                        ],
                         'createdAt',
                         'updatedAt',
                     ]
@@ -61,6 +69,8 @@ class AttendeeControllerTest extends TestCase
             ->assertJsonCount(15, 'data')
             ->assertJson(function (AssertableJson $json) {
                 $json->whereType('data.0.id', 'integer')
+                    ->whereType('data.0.user.id', 'integer')
+                    ->whereType('data.0.user.name', 'string')
                     ->where('data.0.createdAt', fn(string $value) => (bool)preg_match(self::datePattern, $value))
                     ->where('data.0.updatedAt', fn(string $value) => (bool)preg_match(self::datePattern, $value))
                     ->etc();
@@ -68,87 +78,70 @@ class AttendeeControllerTest extends TestCase
 
     }
 
-    public function testAttendeesFromEventSuccessWithPaginate(): void
+    public function testAttendeesFromEventSuccessWithRelationAndPaginate(): void
     {
-        $event = $this->makeEventWithAttendees(18);
+        $event = Event::factory()
+            ->for(User::factory())
+            ->has(
+                Attendee::factory(18)->for(User::factory())
+            )
+            ->create();
 
-        $this->getJson("/api/events/{$event->id}/attendees?page=2")
+        $this->getJson("/api/events/{$event->id}/attendees?relation[]=user&page=2")
             ->assertOk()
+            ->assertJsonStructure([
+                'data' => [
+                    '*' => [
+                        'id',
+                        'user' => [
+                            'id',
+                            'name',
+                        ],
+                    ]
+                ]
+            ])
             ->assertJsonCount(3, 'data');
     }
 
-    public function testAttendeeShowNotBelongToEventNotFound(): void
+    public function testAttendeeShowWithRelationSuccess(): void
     {
-        $eventFirst = $this->makeEventWithAttendees(1);
-        $eventSecond = $this->makeEventWithAttendees(1);
+        $event = Event::factory()
+            ->for(User::factory())
+            ->has(
+                Attendee::factory()->for(User::factory())
+            )
+            ->create();
 
-        $attendeeFromEventSecond = $eventSecond->attendees->first();
-
-        $this->getJson("/api/events/{$eventFirst->id}/attendees/{$attendeeFromEventSecond->id}")
-            ->assertNotFound();
-    }
-
-    public function testAttendeeShowSuccess(): void
-    {
-        $event = $this->makeEventWithAttendees(1);
         $attendee = $event->attendees->first();
 
-        $this->getJson("/api/events/{$event->id}/attendees/{$attendee->id}")
+        $this->getJson("/api/events/{$event->id}/attendees/{$attendee->id}?relation[]=user")
             ->assertOk()
             ->assertJsonStructure([
-                'data' => ['id', 'createdAt', 'updatedAt']
+                'data' => ['id', 'user' => ['id', 'name'], 'createdAt', 'updatedAt']
             ])->assertJson(function (AssertableJson $json) use ($attendee) {
                 $json->where('data.id', fn(int $id) => $id === $attendee->id)
+                    ->where('data.user.id', fn(int $id) => $id === $attendee->user->id)
                     ->where('data.createdAt', fn(string $value) => (bool)preg_match(self::datePattern, $value))
                     ->where('data.updatedAt', fn(string $value) => (bool)preg_match(self::datePattern, $value));
             });
     }
 
-    public function testAttendeeStoreSuccess(): void
+    public function testAttendeeShowWithRelationValidationError(): void
     {
-        // TODO remove this when realize token auth.
-        User::factory()->create(['id' => 1]);
-        $event = Event::factory()->for(User::factory())->create();
-        $this->postJson("/api/events/{$event->id}/attendees")
-            ->assertCreated()
-            ->assertJsonStructure([
-                'data' => ['id', 'user' => ['id', 'name']]
-            ]);
-    }
-
-    public function testAttendeeStoreNotFound(): void
-    {
-        // TODO remove this when realize token auth.
-        $this->postJson("/api/events/11111111111111/attendees")
-            ->assertNotFound()
-            ->assertJsonStructure(['message']);
-    }
-
-    public function testAttendeeDestroyNotFound(): void
-    {
-        // TODO remove this when realize token auth.
-        $this->deleteJson("/api/events/11111111111111/attendees/1111111")
-            ->assertNotFound()
-            ->assertJsonStructure(['message']);
-    }
-
-    public function testAttendeeDestroySuccess(): void
-    {
-        // TODO remove this when realize token auth.
-        $event = $this->makeEventWithAttendees(1);
-
-        $this->deleteJson("/api/events/{$event->id}/attendees/{$event->attendees()->first()->id}")
-            ->assertNoContent();
-    }
-
-    protected function makeEventWithAttendees(int $attendeeCount): Event
-    {
-        return Event::factory()
+        $event = Event::factory()
             ->for(User::factory())
             ->has(
-                Attendee::factory($attendeeCount)
-                    ->for(User::factory())
+                Attendee::factory()->for(User::factory())
             )
             ->create();
+
+        $attendee = $event->attendees->first();
+
+        $this->getJson("/api/events/{$event->id}/attendees/{$attendee->id}?relation[]=abc&some=data&page=20")
+            ->assertUnprocessable()
+            ->assertJsonStructure([
+                'message',
+                'errors' => ['relation.0']
+            ]);
     }
 }

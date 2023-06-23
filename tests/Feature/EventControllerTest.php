@@ -22,12 +22,7 @@ class EventControllerTest extends TestCase
                 Event::factory(2)
                     ->has(
                         Attendee::factory(2)
-                            ->state(function (array $attr, Event $event) {
-                                return [
-                                    'event_id' => $event->id,
-                                    'user_id' => User::factory()->create()->id,
-                                ];
-                            })
+                            ->for(User::factory())
                     )
             )
             ->create();
@@ -54,57 +49,6 @@ class EventControllerTest extends TestCase
                     ->where('data.0.startTime', fn(string $value) => (bool)preg_match(self::datePattern, $value))
                     ->where('data.0.endTime', fn(string $value) => (bool)preg_match(self::datePattern, $value));
             });
-    }
-
-    public function testEventsListWithRelationValidationError(): void
-    {
-        Event::factory(2)
-            ->for(User::factory())
-            ->has(User::factory(4))
-            ->create();
-
-        $this->getJson('/api/events?relation[]=not-valid&relation[]=not-valid-2')
-            ->assertUnprocessable()
-            ->assertJsonStructure(['message', 'errors' => ['relation.0', 'relation.1']]);
-    }
-
-    public function testEventsListWithRelation(): void
-    {
-        Event::factory(2)
-            ->for(User::factory())
-            ->has(
-                Attendee::factory(4)
-                    ->for(User::factory())
-            )
-            ->create();
-
-        $this->getJson('/api/events?relation[]=attendees_count&relation[]=user&relation[]=attendees.user')
-            ->assertOk()
-            ->assertJsonStructure([
-                'data' => [
-                    '*' => [
-                        'id',
-                        'name',
-                        'description',
-                        'startTime',
-                        'endTime',
-                        'countAttendees',
-                        'user' => [
-                            'id', 'name'
-                        ],
-                        'attendees' => [
-                            '*' => [
-                                'id',
-                                'user' => ['id', 'name']
-                            ]
-                        ]
-                    ]
-                ]
-            ])
-            ->assertJsonCount(4, 'data.0.attendees')
-            ->assertJsonCount(4, 'data.1.attendees')
-            ->assertJsonCount(2, 'data')
-        ;
     }
 
     public function testEventStoreSuccess(): void
@@ -218,29 +162,26 @@ class EventControllerTest extends TestCase
 
     public function testEventShowSuccess(): void
     {
-        /** @var User $user */
-        $user = User::factory()->has(Event::factory())->create();
-        /** @var Event $event */
-        $event = $user->events()->first();
+        User::factory()
+            ->has(
+                Event::factory()
+                    ->has(
+                        Attendee::factory(4)
+                            ->for(User::factory())
+                    )
+            )
+            ->create();
 
-        $attendees = Attendee::factory(4)
-            ->make([
-                'event_id' => $event->id,
-                'user_id' => User::factory()->create(),
-            ]);
-
-        $event->attendees()->saveMany($attendees);
+        $event = Event::all()->first();
 
         $this->getJson('/api/events/' . $event->id)
             ->assertOk()
-            ->assertJson(function (AssertableJson $json) use ($event, $user) {
+            ->assertJson(function (AssertableJson $json) use ($event) {
                 $json->where('data.id', fn(int $id) => $id === $event->id)
                     ->where('data.name', fn(string $name) => $name === $event->name)
                     ->where('data.description', fn(string $desc) => $desc === $event->description)
                     ->where('data.startTime', fn(string $value) => (bool)preg_match(self::datePattern, $value))
-                    ->where('data.endTime', fn(string $value) => (bool)preg_match(self::datePattern, $value))
-                    ->where('data.user.id', fn(int $id) => $id === $user->id)
-                    ->where('data.user.name', fn(string $name) => $name === $user->name);
+                    ->where('data.endTime', fn(string $value) => (bool)preg_match(self::datePattern, $value));
             });
     }
 
@@ -260,7 +201,7 @@ class EventControllerTest extends TestCase
     public function testEventUpdateSuccess(): void
     {
         $user = User::factory()->has(Event::factory())->create();
-        $event = $user->events()->first();
+        $event = $user->events->first();
 
         $this->putJson('/api/events/' . $event->id, [
             'name' => 'My updated event name',
