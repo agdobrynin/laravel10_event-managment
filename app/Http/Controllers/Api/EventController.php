@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api;
 
-use App\Enum\EventLoadRelationEnum;
+use App\Dto\LoadRelationAndCountFromRequestDto;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\EventLoadRelationRequest;
 use App\Http\Requests\EventStoreRequest;
@@ -11,7 +11,6 @@ use App\Http\Requests\EventUpdateRequest;
 use App\Http\Resources\EventResource;
 use App\Models\Event;
 use App\Models\User;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Response;
 
@@ -22,20 +21,12 @@ class EventController extends Controller
      */
     public function index(EventLoadRelationRequest $request): AnonymousResourceCollection
     {
-        $query = Event::query();
+        $eventLoadDto = new LoadRelationAndCountFromRequestDto(...$request->validatedToCamel());
 
-        foreach ($request->validated('relation', []) as $relation) {
-            $query->when(
-                $relation !== EventLoadRelationEnum::ATTENDEES_COUNT->value,
-                fn(Builder $builder) => $builder->with($relation)
-            );
-
-            if ($relation === EventLoadRelationEnum::ATTENDEES_COUNT->value) {
-                $query->withCount(EventLoadRelationEnum::ATTENDEES->value);
-            }
-        }
-
-        $query = $query->orderBy('start_time', 'desc');
+        $query = Event::query()
+            ->when($eventLoadDto->relation, fn($query) => $query->with($eventLoadDto->relation))
+            ->when($eventLoadDto->withCount, fn($query) => $query->withCount($eventLoadDto->withCount))
+            ->orderBy('start_time', 'desc');
 
         return EventResource::collection($query->get());
     }
@@ -57,9 +48,14 @@ class EventController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Event $event): EventResource
+    public function show(EventLoadRelationRequest $request, int $eventId): EventResource
     {
-        $event->loadMissing(['user']);
+        $eventLoadDto = new LoadRelationAndCountFromRequestDto(...$request->validatedToCamel());
+
+        $event = Event::query()
+            ->when($eventLoadDto->relation, fn($query) => $query->with($eventLoadDto->relation))
+            ->when($eventLoadDto->withCount, fn($query) => $query->withCount($eventLoadDto->withCount))
+            ->findOrFail($eventId);
 
         return new EventResource($event);
     }

@@ -19,4 +19,17 @@ trait ValidatedRequestConvertArray
 
         return $arr;
     }
+
+    public function validatedToCamel(array $excludeKey = []): array
+    {
+        $arr = [];
+
+        foreach ($this->validated() as $key => $value) {
+            if (!\in_array($key, $excludeKey)) {
+                $arr[Str::camel($key)] = $value;
+            }
+        }
+
+        return $arr;
+    }
 }

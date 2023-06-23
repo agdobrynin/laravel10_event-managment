@@ -2,13 +2,12 @@
 
 namespace App\Http\Requests;
 
-use App\Enum\EventWithCountEnum;
-use App\Enum\EventLoadRelationEnum;
+use App\Enum\AttendeeLoadRelationEnum;
 use App\Traits\ValidatedRequestConvertArray;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rules\Enum;
 
-class EventLoadRelationRequest extends FormRequest
+class AttendeeLoadRelationRequest extends FormRequest
 {
     use ValidatedRequestConvertArray;
 
@@ -30,11 +29,7 @@ class EventLoadRelationRequest extends FormRequest
         return [
             'relation.*' => [
                 'string',
-                new Enum(EventLoadRelationEnum::class),
-            ],
-            'with_count.*' => [
-                'string',
-                new Enum(EventWithCountEnum::class)
+                new Enum(AttendeeLoadRelationEnum::class),
             ],
         ];
     }

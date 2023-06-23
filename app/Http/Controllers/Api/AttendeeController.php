@@ -3,7 +3,9 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api;
 
+use App\Dto\LoadRelationAndCountFromRequestDto;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\AttendeeLoadRelationRequest;
 use App\Http\Resources\AttendeeResource;
 use App\Models\Attendee;
 use App\Models\Event;
@@ -17,11 +19,13 @@ class AttendeeController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index(Event $event): AnonymousResourceCollection
+    public function index(AttendeeLoadRelationRequest $request, int $eventId): AnonymousResourceCollection
     {
-        $attendees = $event->attendees()
-            ->with('user')
-            ->latest()
+        $dto = new LoadRelationAndCountFromRequestDto(...$request->validatedToCamel());
+        $query = Attendee::where('event_id', $eventId)
+            ->when($dto->relation, fn($query) => $query->with($dto->relation));
+
+        $attendees = $query->latest()
             ->paginate();
 
         return AttendeeResource::collection($attendees);
@@ -43,9 +47,14 @@ class AttendeeController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(int $eventId, Attendee $attendee): AttendeeResource
+    public function show(AttendeeLoadRelationRequest $request, int $eventId, int $attendeeId): AttendeeResource
     {
-        $attendee->loadMissing('user');
+        $dto = new LoadRelationAndCountFromRequestDto(...$request->validatedToCamel());
+
+        $query = Attendee::where('event_id', $eventId)
+            ->when($dto->relation, fn($query) => $query->with($dto->relation));
+
+        $attendee = $query->findOrFail($attendeeId);
 
         return new AttendeeResource($attendee);
     }
