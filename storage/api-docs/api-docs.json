@@ -11,6 +11,228 @@
         }
     ],
     "paths": {
+        "/events/{event}/attendees": {
+            "get": {
+                "tags": [
+                    "Attendee"
+                ],
+                "summary": "Display the specified resource.",
+                "description": "Show all attendees in event with relation",
+                "operationId": "attendeesShowInEvent",
+                "parameters": [
+                    {
+                        "name": "event",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "$ref": "#/components/parameters/relationInAttendees"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/PaginateShort"
+                                        },
+                                        {
+                                            "$ref": "#/components/schemas/PaginateMeta"
+                                        },
+                                        {
+                                            "properties": {
+                                                "data": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "$ref": "#/components/schemas/AttendeeResource"
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiErrorResponseDto"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error in query parameters for load relation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiValidationDto"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Attendee"
+                ],
+                "summary": "Store a newly created resource in storage.",
+                "description": "Store new attendee to Event",
+                "operationId": "attendeesStoreInEvent",
+                "parameters": [
+                    {
+                        "name": "event",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Success store new attendee to Event.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AttendeeResource"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Event not found by id.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiErrorResponseDto"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/events/{event}/attendees/{attendee}": {
+            "get": {
+                "tags": [
+                    "Attendee"
+                ],
+                "summary": "Display the specified resource.",
+                "description": "Show attendee from Event",
+                "operationId": "attendeesShowFromEvent",
+                "parameters": [
+                    {
+                        "name": "event",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "attendee",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "$ref": "#/components/parameters/relationInAttendees"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Info about attendee with relation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AttendeeResource"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error for query string with relate loader",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiValidationDto"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiErrorResponseDto"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Attendee"
+                ],
+                "summary": "Remove the specified resource from storage.",
+                "description": "Remove attendee from Event",
+                "operationId": "attendeesDestroyFromEvent",
+                "parameters": [
+                    {
+                        "name": "event",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "attendee",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Delete success",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiErrorResponseDto"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/events": {
             "get": {
                 "tags": [
@@ -348,14 +570,6 @@
                     "id": {
                         "type": "integer"
                     },
-                    "user": {
-                        "oneOf": [
-                            {
-                                "$ref": "#/components/schemas/EventUserResource"
-                            }
-                        ],
-                        "nullable": true
-                    },
                     "createdAt": {
                         "description": "Date and time",
                         "type": "string",
@@ -371,7 +585,17 @@
                         "example": "2023-09-24T15:00:00+00:00"
                     }
                 },
-                "type": "object"
+                "type": "object",
+                "anyOf": [
+                    {
+                        "properties": {
+                            "user": {
+                                "$ref": "#/components/schemas/EventUserResource"
+                            }
+                        },
+                        "type": "object"
+                    }
+                ]
             },
             "EventResource": {
                 "properties": {
@@ -431,7 +655,6 @@
                                 {
                                     "properties": {
                                         "attendees": {
-                                            "minProperties": 0,
                                             "type": "array",
                                             "items": {
                                                 "$ref": "#/components/schemas/AttendeeResource"
@@ -501,6 +724,100 @@
                             "some errors 1",
                             "some errors 2"
                         ]
+                    }
+                },
+                "type": "object"
+            },
+            "PaginateMeta": {
+                "properties": {
+                    "meta": {
+                        "properties": {
+                            "current_page": {
+                                "type": "integer",
+                                "example": 1
+                            },
+                            "from": {
+                                "type": "integer",
+                                "example": 1
+                            },
+                            "to": {
+                                "type": "integer",
+                                "example": 12
+                            },
+                            "last_page": {
+                                "type": "integer",
+                                "example": 9
+                            },
+                            "path": {
+                                "type": "string",
+                                "format": "url",
+                                "example": "http://localhost/api/path"
+                            },
+                            "per_page": {
+                                "type": "integer",
+                                "example": 12
+                            },
+                            "total": {
+                                "type": "integer",
+                                "example": 100
+                            },
+                            "links": {
+                                "type": "array",
+                                "items": {
+                                    "properties": {
+                                        "active": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "label": {
+                                            "type": "string",
+                                            "example": "1"
+                                        },
+                                        "url": {
+                                            "type": "string",
+                                            "format": "url",
+                                            "example": "http://localhost/api/path?page=1",
+                                            "nullable": true
+                                        }
+                                    },
+                                    "type": "object"
+                                },
+                                "minItems": 1
+                            }
+                        },
+                        "type": "object"
+                    }
+                },
+                "type": "object"
+            },
+            "PaginateShort": {
+                "properties": {
+                    "links": {
+                        "properties": {
+                            "first": {
+                                "type": "string",
+                                "format": "url",
+                                "example": "http://localhost/api/path?page=1"
+                            },
+                            "last": {
+                                "type": "string",
+                                "format": "url",
+                                "example": "http://localhost/api/path?page=9"
+                            },
+                            "next": {
+                                "type": "string",
+                                "format": "url",
+                                "example": "http://localhost/api/path?page=2",
+                                "nullable": true
+                            },
+                            "prev": {
+                                "type": "string",
+                                "format": "url",
+                                "example": null,
+                                "nullable": true
+                            }
+                        },
+                        "type": "object"
                     }
                 },
                 "type": "object"

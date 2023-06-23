@@ -28,7 +28,6 @@ use OpenApi\Attributes as OA;
                     new OA\Schema(properties: [
                         new OA\Property(
                             property: 'attendees',
-                            minProperties: 0,
                             type: 'array',
                             items: new OA\Items(ref: AttendeeResource::class),
                             minItems: 0,

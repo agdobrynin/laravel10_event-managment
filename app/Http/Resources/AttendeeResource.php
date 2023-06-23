@@ -11,14 +11,21 @@ use OpenApi\Attributes as OA;
     required: ['id', 'createdAt', 'updatedAt'],
     properties: [
         new OA\Property(property: 'id', type: 'integer'),
-        new OA\Property(property: 'user', ref: EventUserResource::class, nullable: true),
         new DateTimeAtomFormatProperty(property: 'createdAt'),
         new DateTimeAtomFormatProperty(property: 'updatedAt'),
     ],
+    anyOf: [
+        new OA\Schema(
+            properties: [
+                new OA\Property(property: 'user', ref: EventUserResource::class),
+            ]
+        )
+    ]
 )]
 class AttendeeResource extends JsonResource
 {
     protected const DATE_FORMAT = \DateTimeInterface::ATOM;
+
     /**
      * Transform the resource into an array.
      *
