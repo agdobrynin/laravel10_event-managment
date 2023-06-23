@@ -2,11 +2,23 @@
 
 namespace App\Http\Resources;
 
+use App\Virtual\DateTimeAtomFormatProperty;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use OpenApi\Attributes as OA;
 
+#[OA\Schema(
+    required: ['id', 'createdAt', 'updatedAt'],
+    properties: [
+        new OA\Property(property: 'id', type: 'integer'),
+        new OA\Property(property: 'user', ref: EventUserResource::class, nullable: true),
+        new DateTimeAtomFormatProperty(property: 'createdAt'),
+        new DateTimeAtomFormatProperty(property: 'updatedAt'),
+    ],
+)]
 class AttendeeResource extends JsonResource
 {
+    protected const DATE_FORMAT = \DateTimeInterface::ATOM;
     /**
      * Transform the resource into an array.
      *
@@ -17,8 +29,8 @@ class AttendeeResource extends JsonResource
         return [
             'id' => $this->id,
             'user' => new EventUserResource($this->whenLoaded('user')),
-            'createdAt' => $this->created_at,
-            'updatedAt' => $this->updated_at,
+            'createdAt' => $this->created_at->format(self::DATE_FORMAT),
+            'updatedAt' => $this->updated_at->format(self::DATE_FORMAT),
         ];
     }
 }

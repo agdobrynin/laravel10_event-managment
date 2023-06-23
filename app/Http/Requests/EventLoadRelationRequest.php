@@ -2,12 +2,21 @@
 
 namespace App\Http\Requests;
 
-use App\Enum\EventWithCountEnum;
 use App\Enum\EventLoadRelationEnum;
 use App\Traits\ValidatedRequestConvertArray;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rules\Enum;
+use OpenApi\Attributes as OA;
 
+#[OA\QueryParameter(
+    parameter: 'relationInEvent',
+    name: 'relation[]',
+    description: 'Load relations',
+    schema: new OA\Schema(
+        type: 'array',
+        items: new OA\Items(ref: EventLoadRelationEnum::class)
+    )
+)]
 class EventLoadRelationRequest extends FormRequest
 {
     use ValidatedRequestConvertArray;
@@ -31,10 +40,6 @@ class EventLoadRelationRequest extends FormRequest
             'relation.*' => [
                 'string',
                 new Enum(EventLoadRelationEnum::class),
-            ],
-            'with_count.*' => [
-                'string',
-                new Enum(EventWithCountEnum::class)
             ],
         ];
     }

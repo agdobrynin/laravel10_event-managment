@@ -2,22 +2,22 @@
 
 namespace App\Http\Requests;
 
-use App\Enum\AttendeeLoadRelationEnum;
+use App\Enum\EventWithCountEnum;
 use App\Traits\ValidatedRequestConvertArray;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rules\Enum;
 use OpenApi\Attributes as OA;
 
 #[OA\QueryParameter(
-    parameter: 'relationInAttendees',
-    name: 'relation[]',
-    description: 'Load relations',
+    parameter: 'withCountInEvent',
+    name: 'with_count[]',
+    description: 'Load count relation',
     schema: new OA\Schema(
         type: 'array',
-        items: new OA\Items(ref: AttendeeLoadRelationEnum::class)
+        items: new OA\Items(ref: EventWithCountEnum::class)
     )
 )]
-class AttendeeLoadRelationRequest extends FormRequest
+class EventWithCountRequest extends FormRequest
 {
     use ValidatedRequestConvertArray;
 
@@ -37,9 +37,9 @@ class AttendeeLoadRelationRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'relation.*' => [
+            'with_count.*' => [
                 'string',
-                new Enum(AttendeeLoadRelationEnum::class),
+                new Enum(EventWithCountEnum::class)
             ],
         ];
     }

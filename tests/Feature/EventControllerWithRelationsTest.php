@@ -18,9 +18,21 @@ class EventControllerWithRelationsTest extends TestCase
             ->has(User::factory(4))
             ->create();
 
-        $this->getJson('/api/events?relation[]=not-valid&relation[]=not-valid-2&with_count[]=id')
+        $this->getJson('/api/events?relation[]=not-valid&relation[]=not-valid-2')
             ->assertUnprocessable()
-            ->assertJsonStructure(['message', 'errors' => ['relation.0', 'relation.1', 'with_count.0']]);
+            ->assertJsonStructure(['message', 'errors' => ['relation.0', 'relation.1']]);
+    }
+
+    public function testEventsListWithCountValidationError(): void
+    {
+        Event::factory(2)
+            ->for(User::factory())
+            ->has(User::factory(4))
+            ->create();
+
+        $this->getJson('/api/events?with_count[]=id')
+            ->assertUnprocessable()
+            ->assertJsonStructure(['message', 'errors' => ['with_count.0']]);
     }
 
     public function testEventsListWithRelation(): void
@@ -78,11 +90,31 @@ class EventControllerWithRelationsTest extends TestCase
             )
             ->create();
 
-        $this->getJson("/api/events/{$event->id}?relation[]=abc&with_count[]=ppp")
+        $this->getJson("/api/events/{$event->id}?relation[]=abc")
             ->assertUnprocessable()
             ->assertJsonStructure([
                 'message',
-                'errors' => ['relation.0', 'with_count.0']
+                'errors' => ['relation.0']
+            ]);
+    }
+
+    public function testEventShowWithCountValidatedError(): void
+    {
+        $event = Event::factory()
+            ->for(User::factory())
+            ->has(
+                Attendee::factory(2)
+                    ->for(
+                        User::factory()
+                    )
+            )
+            ->create();
+
+        $this->getJson("/api/events/{$event->id}?with_count[]=ppp")
+            ->assertUnprocessable()
+            ->assertJsonStructure([
+                'message',
+                'errors' => ['with_count.0']
             ]);
     }
 
