@@ -16,7 +16,7 @@ use OpenApi\Attributes as OA;
     url: '/api',
     description: 'Main endpoint'
 )]
-#[SecurityScheme(
+#[OA\SecurityScheme(
     securityScheme: 'apiKeyBearer',
     type: 'http',
     description: 'Bearer token authorization',

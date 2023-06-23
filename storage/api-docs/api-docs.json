@@ -540,6 +540,16 @@
                     }
                 }
             }
+        },
+        "securitySchemes": {
+            "apiKeyBearer": {
+                "type": "http",
+                "description": "Bearer token authorization",
+                "name": "Authorization",
+                "in": "header",
+                "bearerFormat": "string",
+                "scheme": "bearer"
+            }
         }
     }
 }
