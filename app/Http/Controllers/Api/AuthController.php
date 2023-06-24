@@ -13,7 +13,6 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
-use Laravel\Sanctum\PersonalAccessToken;
 use OpenApi\Attributes as OA;
 
 class AuthController extends Controller
@@ -23,7 +22,7 @@ class AuthController extends Controller
         operationId: 'authLogin',
         description: 'Get API token',
         summary: 'Return API token if credentials are correct.',
-        tags: ['Auth']
+        tags: ['Authentication']
     )]
     #[OA\RequestBody(
         content: new OA\JsonContent(ref: LoginRequest::class),
@@ -55,7 +54,7 @@ class AuthController extends Controller
         operationId: 'invalidatedAccessToken',
         description: 'Invalidate access token',
         security: [['apiKeyBearer' => []]],
-        tags: ['Auth'],
+        tags: ['Authentication'],
     )]
     #[OA\Response(
         response: 204,
