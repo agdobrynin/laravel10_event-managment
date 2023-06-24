@@ -85,7 +85,7 @@ class EventController extends Controller
     public function store(EventStoreRequest $request): EventResource
     {
         $event = new Event($request->validatedToSnake());
-        $event->user()->associate($request->user);
+        $event->user()->associate($request->user());
         $event->save();
 
         return new EventResource($event);

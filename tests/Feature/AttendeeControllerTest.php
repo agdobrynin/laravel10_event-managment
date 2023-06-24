@@ -7,6 +7,7 @@ use App\Models\Event;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Testing\Fluent\AssertableJson;
+use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
 class AttendeeControllerTest extends TestCase
@@ -106,8 +107,8 @@ class AttendeeControllerTest extends TestCase
 
     public function testAttendeeStoreSuccess(): void
     {
-        // TODO remove this when realize token auth.
-        User::factory()->create(['id' => 1]);
+        Sanctum::actingAs(User::factory()->create());
+
         $event = Event::factory()->for(User::factory())->create();
         $this->postJson("/api/events/{$event->id}/attendees")
             ->assertCreated()
@@ -118,7 +119,8 @@ class AttendeeControllerTest extends TestCase
 
     public function testAttendeeStoreNotFound(): void
     {
-        // TODO remove this when realize token auth.
+        Sanctum::actingAs(User::factory()->create());
+
         $this->postJson("/api/events/11111111111111/attendees")
             ->assertNotFound()
             ->assertJsonStructure(['message']);
@@ -126,7 +128,8 @@ class AttendeeControllerTest extends TestCase
 
     public function testAttendeeDestroyNotFound(): void
     {
-        // TODO remove this when realize token auth.
+        Sanctum::actingAs(User::factory()->create());
+
         $this->deleteJson("/api/events/11111111111111/attendees/1111111")
             ->assertNotFound()
             ->assertJsonStructure(['message']);
@@ -134,8 +137,8 @@ class AttendeeControllerTest extends TestCase
 
     public function testAttendeeDestroySuccess(): void
     {
-        // TODO remove this when realize token auth.
         $event = $this->makeEventWithAttendees(1);
+        Sanctum::actingAs(User::factory()->create());
 
         $this->deleteJson("/api/events/{$event->id}/attendees/{$event->attendees()->first()->id}")
             ->assertNoContent();

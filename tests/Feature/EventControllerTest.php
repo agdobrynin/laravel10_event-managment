@@ -7,6 +7,7 @@ use App\Models\Event;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Testing\Fluent\AssertableJson;
+use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
 class EventControllerTest extends TestCase
@@ -53,8 +54,6 @@ class EventControllerTest extends TestCase
 
     public function testEventStoreSuccess(): void
     {
-        // TODO temporary user - remove when realize authorization
-        User::factory()->create(['id' => 1]);
 
         $data = [
             'name' => 'My first event',
@@ -62,6 +61,8 @@ class EventControllerTest extends TestCase
             'startTime' => now()->addDay()->format('Y-m-d H:i'),
             'endTime' => now()->addDays(2)->format('Y-m-d H:i'),
         ];
+
+        Sanctum::actingAs(User::factory()->create());
 
         $this->postJson('/api/events', $data)
             ->assertCreated()
@@ -83,14 +84,13 @@ class EventControllerTest extends TestCase
 
     public function testEventStoreSuccessWithoutDescription(): void
     {
-        // TODO temporary user - remove when realize authorization
-        User::factory()->create(['id' => 1]);
-
         $data = [
             'name' => 'My second event',
             'startTime' => now()->addDay()->format('Y-m-d H:i'),
             'endTime' => now()->addDays(2)->format('Y-m-d H:i'),
         ];
+
+        Sanctum::actingAs(User::factory()->create());
 
         $this->postJson('/api/events', $data)
             ->assertCreated()
@@ -112,6 +112,8 @@ class EventControllerTest extends TestCase
 
     public function testEventStoreValidationAllEmpty(): void
     {
+        Sanctum::actingAs(User::factory()->create());
+
         $this->postJson('/api/events', [])
             ->assertUnprocessable()
             ->assertJsonStructure([
@@ -122,6 +124,8 @@ class EventControllerTest extends TestCase
 
     public function testEventStoreValidationShortNameWrongDates(): void
     {
+        Sanctum::actingAs(User::factory()->create());
+
         $this->postJson('/api/events', ['name' => 'short', 'startTime' => 'abc', 'endTime' => 'abc'])
             ->assertUnprocessable()
             ->assertJsonStructure([
@@ -132,6 +136,8 @@ class EventControllerTest extends TestCase
 
     public function testEventStoreValidationWrongDatesInPast(): void
     {
+        Sanctum::actingAs(User::factory()->create());
+
         $this->postJson(
             '/api/events',
             [
@@ -147,6 +153,8 @@ class EventControllerTest extends TestCase
 
     public function testEventStoreValidationWrongDatesEndTimeMustBeAfterStartTine(): void
     {
+        Sanctum::actingAs(User::factory()->create());
+
         $this->postJson(
             '/api/events',
             [
@@ -194,6 +202,8 @@ class EventControllerTest extends TestCase
 
     public function testEventUpdateNotFound(): void
     {
+        Sanctum::actingAs(User::factory()->create());
+
         $this->putJson('/api/events/111111111111')
             ->assertNotFound();
     }
@@ -202,6 +212,8 @@ class EventControllerTest extends TestCase
     {
         $user = User::factory()->has(Event::factory())->create();
         $event = $user->events->first();
+
+        Sanctum::actingAs(User::factory()->create());
 
         $this->putJson('/api/events/' . $event->id, [
             'name' => 'My updated event name',
@@ -221,12 +233,16 @@ class EventControllerTest extends TestCase
 
     public function testEventDeleteNotFound(): void
     {
+        Sanctum::actingAs(User::factory()->create());
+
         $this->deleteJson('/api/events/11111111')
             ->assertNotFound();
     }
 
     public function testEventDeleteSuccess(): void
     {
+        Sanctum::actingAs(User::factory()->create());
+
         $user = User::factory()->has(Event::factory())->create();
         $event = $user->events()->first();
 
