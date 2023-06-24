@@ -233,6 +233,91 @@
                 }
             }
         },
+        "/take-token": {
+            "post": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Return API token if credentials are correct.",
+                "description": "Get API token",
+                "operationId": "authLogin",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/LoginRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Success auth",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AuthSuccessDto"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiValidationDto"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiErrorResponseDto"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/invalidate-token": {
+            "delete": {
+                "tags": [
+                    "Auth"
+                ],
+                "description": "Invalidate access token",
+                "operationId": "invalidatedAccessToken",
+                "responses": {
+                    "204": {
+                        "description": "Token was invalidated",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiErrorResponseDto"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "apiKeyBearer": []
+                    }
+                ]
+            }
+        },
         "/events": {
             "get": {
                 "tags": [
@@ -480,6 +565,15 @@
                 },
                 "type": "object"
             },
+            "AuthSuccessDto": {
+                "properties": {
+                    "token": {
+                        "title": "API Token",
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
             "AttendeeLoadRelationEnum": {
                 "type": "string",
                 "enum": [
@@ -559,6 +653,23 @@
                         "type": "object"
                     }
                 ]
+            },
+            "LoginRequest": {
+                "required": [
+                    "email",
+                    "password"
+                ],
+                "properties": {
+                    "email": {
+                        "type": "string",
+                        "format": "email"
+                    },
+                    "password": {
+                        "type": "string",
+                        "example": "password"
+                    }
+                },
+                "type": "object"
             },
             "AttendeeResource": {
                 "required": [
