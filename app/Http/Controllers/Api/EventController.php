@@ -11,8 +11,8 @@ use App\Http\Requests\EventUpdateRequest;
 use App\Http\Requests\EventWithCountRequest;
 use App\Http\Resources\EventResource;
 use App\Models\Event;
-use App\Models\User;
 use App\Virtual\HttpNotFoundResponse;
+use App\Virtual\HttpUnauthorizedResponse;
 use App\Virtual\HttpValidationErrorResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Response;
@@ -20,6 +20,12 @@ use OpenApi\Attributes as OA;
 
 class EventController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware(['auth:sanctum'])
+            ->except(['index', 'show']);
+    }
+
     #[OA\Get(
         path: '/events',
         operationId: 'eventsList',
@@ -60,6 +66,7 @@ class EventController extends Controller
         operationId: 'eventsStore',
         description: 'Store new event',
         summary: 'Store a newly created resource in storage.',
+        security: [['apiKeyBearer' => []]],
         tags: ['Events']
     )]
     #[OA\RequestBody(
@@ -73,13 +80,12 @@ class EventController extends Controller
             type: 'object',
         )
     )]
+    #[HttpUnauthorizedResponse]
     #[HttpValidationErrorResponse]
     public function store(EventStoreRequest $request): EventResource
     {
-        $user = User::findOrFail(1); // TODO make from Request
-
         $event = new Event($request->validatedToSnake());
-        $event->user()->associate($user);
+        $event->user()->associate($request->user);
         $event->save();
 
         return new EventResource($event);
@@ -128,6 +134,7 @@ class EventController extends Controller
         operationId: 'eventsUpdate',
         description: 'Update event',
         summary: 'Update the specified resource in storage.',
+        security: [['apiKeyBearer' => []]],
         tags: ['Events'],
     )]
     #[OA\PathParameter(name: 'event', required: true, schema: new OA\Schema(type: 'integer'))]
@@ -142,6 +149,7 @@ class EventController extends Controller
             type: 'object',
         )
     )]
+    #[HttpUnauthorizedResponse]
     #[HttpValidationErrorResponse]
     #[HttpNotFoundResponse]
     public function update(EventUpdateRequest $request, Event $event): EventResource
@@ -156,6 +164,7 @@ class EventController extends Controller
         operationId: 'eventsDestroy',
         description: 'Delete event with attendees',
         summary: 'Remove the specified resource from storage.',
+        security: [['apiKeyBearer' => []]],
         tags: ['Events'],
     )]
     #[OA\Response(
@@ -164,6 +173,7 @@ class EventController extends Controller
         content: new OA\JsonContent(type: 'string'),
     )]
     #[OA\PathParameter(name: 'event', required: true, schema: new OA\Schema(type: 'integer'))]
+    #[HttpUnauthorizedResponse]
     #[HttpNotFoundResponse]
     public function destroy(Event $event): Response
     {

@@ -9,8 +9,8 @@ use App\Http\Requests\AttendeeLoadRelationRequest;
 use App\Http\Resources\AttendeeResource;
 use App\Models\Attendee;
 use App\Models\Event;
-use App\Models\User;
 use App\Virtual\HttpNotFoundResponse;
+use App\Virtual\HttpUnauthorizedResponse;
 use App\Virtual\HttpValidationErrorResponse;
 use App\Virtual\PaginateMeta;
 use App\Virtual\PaginateShort;
@@ -21,6 +21,13 @@ use OpenApi\Attributes as OA;
 
 class AttendeeController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware(['auth:sanctum'])
+            ->except(['index', 'show']);
+
+    }
+
     #[OA\Get(
         path: '/events/{event}/attendees',
         operationId: 'attendeesShowInEvent',
@@ -68,6 +75,7 @@ class AttendeeController extends Controller
         operationId: 'attendeesStoreInEvent',
         description: 'Store new attendee to Event',
         summary: 'Store a newly created resource in storage.',
+        security: [['apiKeyBearer' => []]],
         tags: ['Attendee']
     )]
     #[OA\PathParameter(name: 'event', required: true, schema: new OA\Schema(type: 'integer'))]
@@ -78,13 +86,13 @@ class AttendeeController extends Controller
             new OA\JsonContent(ref: AttendeeResource::class)
         ]
     )]
+    #[HttpUnauthorizedResponse]
     #[HttpNotFoundResponse(description: 'Event not found by id.')]
     public function store(Request $request, Event $event): AttendeeResource
     {
-        $user = User::findOrFail(1); // TODO make from Request
         /** @var Attendee $attendee */
         $attendee = $event->attendees()->make();
-        $attendee->user()->associate($user)->save();
+        $attendee->user()->associate($request->user())->save();
 
         return new AttendeeResource($attendee);
     }
@@ -125,6 +133,7 @@ class AttendeeController extends Controller
         operationId: 'attendeesDestroyFromEvent',
         description: 'Remove attendee from Event',
         summary: 'Remove the specified resource from storage.',
+        security: [['apiKeyBearer' => []]],
         tags: ['Attendee']
     )]
     #[OA\PathParameter(name: 'event', required: true, schema: new OA\Schema(type: 'integer'))]
@@ -136,6 +145,7 @@ class AttendeeController extends Controller
             new OA\JsonContent()
         ]
     )]
+    #[HttpUnauthorizedResponse]
     #[HttpNotFoundResponse]
     public function destroy(int $eventId, Attendee $attendee): Response
     {
