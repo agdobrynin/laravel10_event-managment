@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api;
 
 use App\Dto\LoadRelationAndCountFromRequestDto;
+use App\Helpers\ModelLoadRelationCount;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\EventLoadRelationRequest;
 use App\Http\Requests\EventStoreRequest;
@@ -24,6 +25,8 @@ class EventController extends Controller
     {
         $this->middleware(['auth:sanctum'])
             ->except(['index', 'show']);
+
+        $this->authorizeResource(Event::class, 'event');
     }
 
     #[OA\Get(
@@ -53,10 +56,11 @@ class EventController extends Controller
             ...[...$requestRelation->validatedToCamel(), ...$requestCount->validatedToCamel()]
         );
 
-        $query = Event::query()
-            ->when($eventLoadDto->relation, fn($query) => $query->with($eventLoadDto->relation))
-            ->when($eventLoadDto->withCount, fn($query) => $query->withCount($eventLoadDto->withCount))
-            ->orderBy('start_time', 'desc');
+        $query = Event::query();
+
+        ModelLoadRelationCount::load($query, $eventLoadDto);
+
+        $query->orderBy('start_time', 'desc');
 
         return EventResource::collection($query->get());
     }
@@ -114,17 +118,14 @@ class EventController extends Controller
     public function show(
         EventLoadRelationRequest $requestRelation,
         EventWithCountRequest    $requestCount,
-        int                      $eventId
+        Event                     $event
     ): EventResource
     {
         $eventLoadDto = new LoadRelationAndCountFromRequestDto(
             ...[...$requestRelation->validatedToCamel(), ...$requestCount->validatedToCamel()]
         );
 
-        $event = Event::query()
-            ->when($eventLoadDto->relation, fn($query) => $query->with($eventLoadDto->relation))
-            ->when($eventLoadDto->withCount, fn($query) => $query->withCount($eventLoadDto->withCount))
-            ->findOrFail($eventId);
+        ModelLoadRelationCount::load($event, $eventLoadDto);
 
         return new EventResource($event);
     }

@@ -62,7 +62,8 @@ class EventControllerTest extends TestCase
             'endTime' => now()->addDays(2)->format('Y-m-d H:i'),
         ];
 
-        Sanctum::actingAs(User::factory()->create());
+        $owner = User::factory()->create();
+        Sanctum::actingAs($owner);
 
         $this->postJson('/api/events', $data)
             ->assertCreated()
@@ -71,14 +72,14 @@ class EventControllerTest extends TestCase
                     'id', 'name', 'description', 'startTime', 'endTime', 'user' => ['id', 'name']
                 ]
             ])
-            ->assertJson(function (AssertableJson $json) {
+            ->assertJson(function (AssertableJson $json) use ($owner) {
                 $json->whereType('data.id', 'integer')
                     ->whereType('data.name', 'string')
                     ->whereType('data.description', 'string')
                     ->where('data.startTime', fn(string $value) => (bool)preg_match(self::datePattern, $value))
                     ->where('data.endTime', fn(string $value) => (bool)preg_match(self::datePattern, $value))
-                    ->whereType('data.user.id', 'integer')
-                    ->whereType('data.user.name', 'string');
+                    ->where('data.user.id', fn(int $id) => $id === $owner->id)
+                    ->where('data.user.name', fn(string $name) => $name === $owner->name);
             });;
     }
 
@@ -213,7 +214,8 @@ class EventControllerTest extends TestCase
         $user = User::factory()->has(Event::factory())->create();
         $event = $user->events->first();
 
-        Sanctum::actingAs(User::factory()->create());
+        // Update owner only
+        Sanctum::actingAs($user);
 
         $this->putJson('/api/events/' . $event->id, [
             'name' => 'My updated event name',
@@ -231,6 +233,22 @@ class EventControllerTest extends TestCase
             ]);
     }
 
+    public function testEventUpdateForbidden(): void
+    {
+        $user = User::factory()->has(Event::factory())->create();
+        $event = $user->events->first();
+
+        Sanctum::actingAs(User::factory()->create());
+
+        $this->putJson('/api/events/' . $event->id, [
+            'name' => 'My updated event name',
+            'description' => 'Changed description in event',
+            'startTime' => $event->start_time->format('Y-m-d H:i'),
+            'endTime' => $event->end_time->format('Y-m-d H:i'),
+        ])
+            ->assertForbidden();
+    }
+
     public function testEventDeleteNotFound(): void
     {
         Sanctum::actingAs(User::factory()->create());
@@ -239,12 +257,23 @@ class EventControllerTest extends TestCase
             ->assertNotFound();
     }
 
-    public function testEventDeleteSuccess(): void
+    public function testEventDeleteForbidden(): void
     {
         Sanctum::actingAs(User::factory()->create());
 
         $user = User::factory()->has(Event::factory())->create();
         $event = $user->events()->first();
+
+        $this->deleteJson('/api/events/' . $event->id)
+            ->assertForbidden();
+    }
+
+    public function testEventDeleteSuccess(): void
+    {
+        $user = User::factory()->has(Event::factory())->create();
+        $event = $user->events()->first();
+
+        Sanctum::actingAs($user);
 
         $this->deleteJson('/api/events/' . $event->id)
             ->assertNoContent();
