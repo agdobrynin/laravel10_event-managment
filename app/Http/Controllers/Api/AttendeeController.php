@@ -9,6 +9,7 @@ use App\Http\Requests\AttendeeLoadRelationRequest;
 use App\Http\Resources\AttendeeResource;
 use App\Models\Attendee;
 use App\Models\Event;
+use App\Services\AttendeeService;
 use App\Virtual\HttpForbiddenResponse;
 use App\Virtual\HttpNotFoundResponse;
 use App\Virtual\HttpUnauthorizedResponse;
@@ -22,7 +23,7 @@ use OpenApi\Attributes as OA;
 
 class AttendeeController extends Controller
 {
-    public function __construct()
+    public function __construct(private AttendeeService $attendeeService)
     {
         $this->middleware(['auth:sanctum'])
             ->except(['index', 'show']);
@@ -91,9 +92,7 @@ class AttendeeController extends Controller
     #[HttpNotFoundResponse(description: 'Event not found by id.')]
     public function store(Request $request, Event $event): AttendeeResource
     {
-        /** @var Attendee $attendee */
-        $attendee = $event->attendees()->make();
-        $attendee->user()->associate($request->user())->save();
+        $attendee = $this->attendeeService->store($event, $request);
 
         return new AttendeeResource($attendee);
     }

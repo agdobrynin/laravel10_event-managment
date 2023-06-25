@@ -11,6 +11,7 @@ use App\Http\Requests\EventUpdateRequest;
 use App\Http\Requests\EventWithCountRequest;
 use App\Http\Resources\EventResource;
 use App\Models\Event;
+use App\Services\EventService;
 use App\Virtual\HttpForbiddenResponse;
 use App\Virtual\HttpNotFoundResponse;
 use App\Virtual\HttpUnauthorizedResponse;
@@ -21,7 +22,7 @@ use OpenApi\Attributes as OA;
 
 class EventController extends Controller
 {
-    public function __construct()
+    public function __construct(private EventService $eventService)
     {
         $this->middleware(['auth:sanctum'])
             ->except(['index', 'show']);
@@ -53,7 +54,7 @@ class EventController extends Controller
     ): AnonymousResourceCollection
     {
         $dto = new LoadRelationAndCountFromRequestDto(
-            ...[...$requestRelation->validatedToCamel(), ...$requestCount->validatedToCamel()]
+            ...$requestRelation->validatedToCamel(), ...$requestCount->validatedToCamel()
         );
 
         $query = Event::loadRelationsAndCounts($dto)
@@ -85,9 +86,7 @@ class EventController extends Controller
     #[HttpValidationErrorResponse]
     public function store(EventStoreRequest $request): EventResource
     {
-        $event = Event::make($request->validatedToSnake());
-        $event->user()->associate($request->user());
-        $event->save();
+        $event = $this->eventService->store($request);
 
         return new EventResource($event);
     }
@@ -119,7 +118,7 @@ class EventController extends Controller
     ): EventResource
     {
         $dto = new LoadRelationAndCountFromRequestDto(
-            ...[...$requestRelation->validatedToCamel(), ...$requestCount->validatedToCamel()]
+            ...$requestRelation->validatedToCamel(), ...$requestCount->validatedToCamel()
         );
 
         $eventWith = $event->loadRelationsAndCounts($dto)->first();
@@ -153,7 +152,7 @@ class EventController extends Controller
     #[HttpNotFoundResponse]
     public function update(EventUpdateRequest $request, Event $event): EventResource
     {
-        $event->update($request->validatedToSnake());
+        $this->eventService->update($request, $event);
 
         return new EventResource($event);
     }
