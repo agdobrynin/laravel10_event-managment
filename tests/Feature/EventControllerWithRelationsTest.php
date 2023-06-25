@@ -5,6 +5,7 @@ use App\Models\Attendee;
 use App\Models\Event;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Tests\TestCase;
 
 class EventControllerWithRelationsTest extends TestCase
@@ -46,7 +47,7 @@ class EventControllerWithRelationsTest extends TestCase
                     )
             )->create();
 
-        $this->getJson('/api/events?relation[]=user&relation[]=attendees&relation[]=attendees.user&with_count[]=attendees')
+        $response = $this->getJson('/api/events?relation[]=user&relation[]=attendees&relation[]=attendees.user&with_count[]=attendees')
             ->assertOk()
             ->assertJsonCount(2, 'data')
             ->assertJsonCount(2, 'data.0.attendees')
@@ -76,6 +77,12 @@ class EventControllerWithRelationsTest extends TestCase
                     ]
                 ]
             ]);
+
+        // Test sort Events by start time as desc.
+        $this->assertGreaterThan(
+            Carbon::make($response->json('data.1.startTime')),
+            Carbon::make($response->json('data.0.startTime'))
+        );
     }
 
     public function testEventShowWithRelationValidatedError(): void

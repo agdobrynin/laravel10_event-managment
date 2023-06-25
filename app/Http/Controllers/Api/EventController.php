@@ -4,7 +4,6 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api;
 
 use App\Dto\LoadRelationAndCountFromRequestDto;
-use App\Helpers\ModelLoadRelationCount;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\EventLoadRelationRequest;
 use App\Http\Requests\EventStoreRequest;
@@ -53,12 +52,12 @@ class EventController extends Controller
         EventWithCountRequest    $requestCount,
     ): AnonymousResourceCollection
     {
-        $eventLoadDto = new LoadRelationAndCountFromRequestDto(
+        $dto = new LoadRelationAndCountFromRequestDto(
             ...[...$requestRelation->validatedToCamel(), ...$requestCount->validatedToCamel()]
         );
 
-        $query = ModelLoadRelationCount::load(Event::query(), $eventLoadDto)
-            ->orderBy('start_time', 'desc');
+        $query = Event::loadRelationsAndCounts($dto)
+            ->sortByStartTime();
 
         return EventResource::collection($query->get());
     }
@@ -116,16 +115,16 @@ class EventController extends Controller
     public function show(
         EventLoadRelationRequest $requestRelation,
         EventWithCountRequest    $requestCount,
-        Event                     $event
+        Event                    $event
     ): EventResource
     {
-        $eventLoadDto = new LoadRelationAndCountFromRequestDto(
+        $dto = new LoadRelationAndCountFromRequestDto(
             ...[...$requestRelation->validatedToCamel(), ...$requestCount->validatedToCamel()]
         );
 
-        $query = ModelLoadRelationCount::load($event->newQuery(), $eventLoadDto);
+        $eventWith = $event->loadRelationsAndCounts($dto)->first();
 
-        return new EventResource($query->first());
+        return new EventResource($eventWith);
     }
 
     #[OA\Put(

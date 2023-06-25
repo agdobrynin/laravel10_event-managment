@@ -6,6 +6,7 @@ use App\Models\Attendee;
 use App\Models\Event;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Illuminate\Testing\Fluent\AssertableJson;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
@@ -29,7 +30,7 @@ class EventControllerTest extends TestCase
             ->create();
 
 
-        $this->getJson('/api/events')
+        $response =$this->getJson('/api/events')
             ->assertOk()
             ->assertJsonStructure([
                 'data' => [
@@ -50,6 +51,12 @@ class EventControllerTest extends TestCase
                     ->where('data.0.startTime', fn(string $value) => (bool)preg_match(self::datePattern, $value))
                     ->where('data.0.endTime', fn(string $value) => (bool)preg_match(self::datePattern, $value));
             });
+
+        // Test sort Events by start time as desc.
+        $this->assertGreaterThan(
+            Carbon::make($response->json('data.1.startTime')),
+            Carbon::make($response->json('data.0.startTime'))
+        );
     }
 
     public function testEventStoreSuccess(): void

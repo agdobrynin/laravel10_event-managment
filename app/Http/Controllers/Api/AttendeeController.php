@@ -4,7 +4,6 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api;
 
 use App\Dto\LoadRelationAndCountFromRequestDto;
-use App\Helpers\ModelLoadRelationCount;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AttendeeLoadRelationRequest;
 use App\Http\Resources\AttendeeResource;
@@ -64,9 +63,9 @@ class AttendeeController extends Controller
     public function index(AttendeeLoadRelationRequest $request, int $eventId): AnonymousResourceCollection
     {
         $dto = new LoadRelationAndCountFromRequestDto(...$request->validatedToCamel());
-        $query = ModelLoadRelationCount::load(Attendee::where('event_id', $eventId), $dto);
 
-        $attendees = $query->latest()
+        $attendees = Attendee::byEventId($eventId)
+            ->loadRelationsAndCounts($dto)
             ->paginate();
 
         return AttendeeResource::collection($attendees);
@@ -123,7 +122,7 @@ class AttendeeController extends Controller
         $this->attendeeBelongToEvent($eventId, $attendee);
 
         $dto = new LoadRelationAndCountFromRequestDto(...$request->validatedToCamel());
-        $attendeeWith = ModelLoadRelationCount::load($attendee->newQuery(), $dto)->firstOrFail();
+        $attendeeWith = $attendee->loadRelationsAndCounts($dto)->firstOrFail();
 
         return new AttendeeResource($attendeeWith);
     }
