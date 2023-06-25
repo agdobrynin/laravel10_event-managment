@@ -125,10 +125,9 @@ class AttendeeController extends Controller
         }
 
         $dto = new LoadRelationAndCountFromRequestDto(...$request->validatedToCamel());
-        $query = $attendee->newQuery();
-        ModelLoadRelationCount::load($query, $dto);
+        $attendeeWith = ModelLoadRelationCount::load($attendee->newQuery(), $dto)->firstOrFail();
 
-        return new AttendeeResource($query->firstOrFail());
+        return new AttendeeResource($attendeeWith);
     }
 
     #[OA\Delete(

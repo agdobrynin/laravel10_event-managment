@@ -57,11 +57,8 @@ class EventController extends Controller
             ...[...$requestRelation->validatedToCamel(), ...$requestCount->validatedToCamel()]
         );
 
-        $query = Event::query();
-
-        ModelLoadRelationCount::load($query, $eventLoadDto);
-
-        $query->orderBy('start_time', 'desc');
+        $query = ModelLoadRelationCount::load(Event::query(), $eventLoadDto)
+            ->orderBy('start_time', 'desc');
 
         return EventResource::collection($query->get());
     }
@@ -126,9 +123,7 @@ class EventController extends Controller
             ...[...$requestRelation->validatedToCamel(), ...$requestCount->validatedToCamel()]
         );
 
-        $query = $event->newQuery();
-
-        ModelLoadRelationCount::load($query, $eventLoadDto);
+        $query = ModelLoadRelationCount::load($event->newQuery(), $eventLoadDto);
 
         return new EventResource($query->first());
     }
