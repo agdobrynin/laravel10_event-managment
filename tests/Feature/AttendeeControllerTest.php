@@ -135,10 +135,28 @@ class AttendeeControllerTest extends TestCase
             ->assertJsonStructure(['message']);
     }
 
-    public function testAttendeeDestroySuccess(): void
+    public function testAttendeeDestroyForbidden(): void
     {
         $event = $this->makeEventWithAttendees(1);
         Sanctum::actingAs(User::factory()->create());
+
+        $this->deleteJson("/api/events/{$event->id}/attendees/{$event->attendees()->first()->id}")
+            ->assertForbidden();
+    }
+
+    public function testAttendeeDestroySuccessByEventOwner(): void
+    {
+        $event = $this->makeEventWithAttendees(1);
+        Sanctum::actingAs($event->user);
+
+        $this->deleteJson("/api/events/{$event->id}/attendees/{$event->attendees()->first()->id}")
+            ->assertNoContent();
+    }
+
+    public function testAttendeeDestroySuccessByAttendee(): void
+    {
+        $event = $this->makeEventWithAttendees(1);
+        Sanctum::actingAs($event->attendees()->first()->user);
 
         $this->deleteJson("/api/events/{$event->id}/attendees/{$event->attendees()->first()->id}")
             ->assertNoContent();

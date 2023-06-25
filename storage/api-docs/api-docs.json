@@ -206,7 +206,7 @@
                     "Attendee"
                 ],
                 "summary": "Remove the specified resource from storage.",
-                "description": "Remove attendee from Event",
+                "description": "Remove attendee from Event by Attendee owner or Event owner",
                 "operationId": "attendeesDestroyFromEvent",
                 "parameters": [
                     {

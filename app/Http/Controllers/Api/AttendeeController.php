@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api;
 
 use App\Dto\LoadRelationAndCountFromRequestDto;
+use App\Helpers\ModelLoadRelationCount;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AttendeeLoadRelationRequest;
 use App\Http\Resources\AttendeeResource;
@@ -25,7 +26,7 @@ class AttendeeController extends Controller
     {
         $this->middleware(['auth:sanctum'])
             ->except(['index', 'show']);
-
+        $this->authorizeResource(Attendee::class, 'attendee');
     }
 
     #[OA\Get(
@@ -116,22 +117,23 @@ class AttendeeController extends Controller
     )]
     #[HttpValidationErrorResponse(description: 'Validation error for query string with relate loader')]
     #[HttpNotFoundResponse]
-    public function show(AttendeeLoadRelationRequest $request, int $eventId, int $attendeeId): AttendeeResource
+    public function show(AttendeeLoadRelationRequest $request, int $eventId, Attendee $attendee): AttendeeResource
     {
+        if ($attendee->event_id !== $eventId) {
+            abort(404, 'Attendee not belong to Event with id ' . $eventId);
+        }
+
         $dto = new LoadRelationAndCountFromRequestDto(...$request->validatedToCamel());
+        $query = $attendee->newQuery();
+        ModelLoadRelationCount::load($query, $dto);
 
-        $query = Attendee::where('event_id', $eventId)
-            ->when($dto->relation, fn($query) => $query->with($dto->relation));
-
-        $attendee = $query->findOrFail($attendeeId);
-
-        return new AttendeeResource($attendee);
+        return new AttendeeResource($query->firstOrFail());
     }
 
     #[OA\Delete(
         path: '/events/{event}/attendees/{attendee}',
         operationId: 'attendeesDestroyFromEvent',
-        description: 'Remove attendee from Event',
+        description: 'Remove attendee from Event by Attendee owner or Event owner',
         summary: 'Remove the specified resource from storage.',
         security: [['apiKeyBearer' => []]],
         tags: ['Attendee']
