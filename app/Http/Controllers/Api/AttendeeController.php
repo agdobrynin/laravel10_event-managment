@@ -10,6 +10,7 @@ use App\Http\Requests\AttendeeLoadRelationRequest;
 use App\Http\Resources\AttendeeResource;
 use App\Models\Attendee;
 use App\Models\Event;
+use App\Virtual\HttpForbiddenResponse;
 use App\Virtual\HttpNotFoundResponse;
 use App\Virtual\HttpUnauthorizedResponse;
 use App\Virtual\HttpValidationErrorResponse;
@@ -148,6 +149,7 @@ class AttendeeController extends Controller
         ]
     )]
     #[HttpUnauthorizedResponse]
+    #[HttpForbiddenResponse]
     #[HttpNotFoundResponse]
     public function destroy(int $eventId, Attendee $attendee): Response
     {

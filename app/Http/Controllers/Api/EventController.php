@@ -12,6 +12,7 @@ use App\Http\Requests\EventUpdateRequest;
 use App\Http\Requests\EventWithCountRequest;
 use App\Http\Resources\EventResource;
 use App\Models\Event;
+use App\Virtual\HttpForbiddenResponse;
 use App\Virtual\HttpNotFoundResponse;
 use App\Virtual\HttpUnauthorizedResponse;
 use App\Virtual\HttpValidationErrorResponse;
@@ -154,6 +155,7 @@ class EventController extends Controller
     )]
     #[HttpUnauthorizedResponse]
     #[HttpValidationErrorResponse]
+    #[HttpForbiddenResponse]
     #[HttpNotFoundResponse]
     public function update(EventUpdateRequest $request, Event $event): EventResource
     {
@@ -177,6 +179,7 @@ class EventController extends Controller
     )]
     #[OA\PathParameter(name: 'event', required: true, schema: new OA\Schema(type: 'integer'))]
     #[HttpUnauthorizedResponse]
+    #[HttpForbiddenResponse]
     #[HttpNotFoundResponse]
     public function destroy(Event $event): Response
     {
