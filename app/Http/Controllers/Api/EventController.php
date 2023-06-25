@@ -125,9 +125,11 @@ class EventController extends Controller
             ...[...$requestRelation->validatedToCamel(), ...$requestCount->validatedToCamel()]
         );
 
-        ModelLoadRelationCount::load($event, $eventLoadDto);
+        $query = $event->newQuery();
 
-        return new EventResource($event);
+        ModelLoadRelationCount::load($query, $eventLoadDto);
+
+        return new EventResource($query->first());
     }
 
     #[OA\Put(
