@@ -86,7 +86,7 @@ class EventController extends Controller
     #[HttpValidationErrorResponse]
     public function store(EventStoreRequest $request): EventResource
     {
-        $event = new Event($request->validatedToSnake());
+        $event = Event::make($request->validatedToSnake());
         $event->user()->associate($request->user());
         $event->save();
 

@@ -144,6 +144,24 @@ class AttendeeControllerTest extends TestCase
             ->assertForbidden();
     }
 
+    public function testAttendeeDestroyAttendeeNotBelongToEventNotFound(): void
+    {
+        $eventOwner = User::factory()->create();
+
+        $event1 = Event::factory()->for($eventOwner)
+            ->has(Attendee::factory()->for($eventOwner))
+            ->create();
+
+        $event2 = Event::factory()->for($eventOwner)
+            ->has(Attendee::factory()->for($eventOwner))
+            ->create();
+
+        Sanctum::actingAs($eventOwner);
+
+        $this->deleteJson("/api/events/{$event1->id}/attendees/{$event2->attendees()->first()->id}")
+            ->assertNotFound();
+    }
+
     public function testAttendeeDestroySuccessByEventOwner(): void
     {
         $event = $this->makeEventWithAttendees(1);

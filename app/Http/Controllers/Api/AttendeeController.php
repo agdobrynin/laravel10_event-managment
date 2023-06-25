@@ -27,6 +27,7 @@ class AttendeeController extends Controller
     {
         $this->middleware(['auth:sanctum'])
             ->except(['index', 'show']);
+
         $this->authorizeResource(Attendee::class, 'attendee');
     }
 
@@ -63,8 +64,7 @@ class AttendeeController extends Controller
     public function index(AttendeeLoadRelationRequest $request, int $eventId): AnonymousResourceCollection
     {
         $dto = new LoadRelationAndCountFromRequestDto(...$request->validatedToCamel());
-        $query = Attendee::where('event_id', $eventId)
-            ->when($dto->relation, fn($query) => $query->with($dto->relation));
+        $query = ModelLoadRelationCount::load(Attendee::where('event_id', $eventId), $dto);
 
         $attendees = $query->latest()
             ->paginate();
@@ -120,9 +120,7 @@ class AttendeeController extends Controller
     #[HttpNotFoundResponse]
     public function show(AttendeeLoadRelationRequest $request, int $eventId, Attendee $attendee): AttendeeResource
     {
-        if ($attendee->event_id !== $eventId) {
-            abort(404, 'Attendee not belong to Event with id ' . $eventId);
-        }
+        $this->attendeeBelongToEvent($eventId, $attendee);
 
         $dto = new LoadRelationAndCountFromRequestDto(...$request->validatedToCamel());
         $attendeeWith = ModelLoadRelationCount::load($attendee->newQuery(), $dto)->firstOrFail();
@@ -152,8 +150,16 @@ class AttendeeController extends Controller
     #[HttpNotFoundResponse]
     public function destroy(int $eventId, Attendee $attendee): Response
     {
+        $this->attendeeBelongToEvent($eventId, $attendee);
         $attendee->delete();
 
         return response()->noContent();
+    }
+
+    protected function attendeeBelongToEvent(int $eventId, Attendee $attendee): void
+    {
+        if ($attendee->event_id !== $eventId) {
+            abort(404, 'Attendee not belong to Event with id ' . $eventId);
+        }
     }
 }
