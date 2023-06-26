@@ -22,7 +22,7 @@ use OpenApi\Attributes as OA;
 
 class EventController extends Controller
 {
-    public function __construct(private EventService $eventService)
+    public function __construct(private readonly EventService $eventService)
     {
         $this->middleware(['auth:sanctum'])
             ->except(['index', 'show']);
@@ -86,7 +86,7 @@ class EventController extends Controller
     #[HttpValidationErrorResponse]
     public function store(EventStoreRequest $request): EventResource
     {
-        $event = $this->eventService->store($request);
+        $event = $this->eventService->store($request, $request->user());
 
         return new EventResource($event);
     }

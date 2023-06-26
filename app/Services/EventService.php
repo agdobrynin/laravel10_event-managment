@@ -6,13 +6,14 @@ namespace App\Services;
 use App\Http\Requests\EventStoreRequest;
 use App\Http\Requests\EventUpdateRequest;
 use App\Models\Event;
+use App\Models\User;
 
 class EventService
 {
-    public function store(EventStoreRequest $request): Event
+    public function store(EventStoreRequest $request, User $user): Event
     {
         $event = Event::make($request->validatedToSnake());
-        $event->user()->associate($request->user());
+        $event->user()->associate($user);
         $event->save();
 
         return $event;

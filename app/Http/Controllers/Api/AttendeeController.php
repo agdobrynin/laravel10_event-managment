@@ -23,7 +23,7 @@ use OpenApi\Attributes as OA;
 
 class AttendeeController extends Controller
 {
-    public function __construct(private AttendeeService $attendeeService)
+    public function __construct(private readonly AttendeeService $attendeeService)
     {
         $this->middleware(['auth:sanctum'])
             ->except(['index', 'show']);
@@ -92,7 +92,7 @@ class AttendeeController extends Controller
     #[HttpNotFoundResponse(description: 'Event not found by id.')]
     public function store(Request $request, Event $event): AttendeeResource
     {
-        $attendee = $this->attendeeService->store($event, $request);
+        $attendee = $this->attendeeService->store($event, $request->user());
 
         return new AttendeeResource($attendee);
     }
