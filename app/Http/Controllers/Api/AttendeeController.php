@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api;
 
 use App\Dto\LoadRelationAndCountFromRequestDto;
+use App\Enum\AbilityAttendeeEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AttendeeLoadRelationRequest;
 use App\Http\Resources\AttendeeResource;
@@ -27,8 +28,6 @@ class AttendeeController extends Controller
     {
         $this->middleware(['auth:sanctum'])
             ->except(['index', 'show']);
-
-        $this->authorizeResource(Attendee::class, 'attendee');
     }
 
     #[OA\Get(
@@ -116,10 +115,8 @@ class AttendeeController extends Controller
     )]
     #[HttpValidationErrorResponse(description: 'Validation error for query string with relate loader')]
     #[HttpNotFoundResponse]
-    public function show(AttendeeLoadRelationRequest $request, int $eventId, Attendee $attendee): AttendeeResource
+    public function show(AttendeeLoadRelationRequest $request, Event $event, Attendee $attendee): AttendeeResource
     {
-        $this->attendeeBelongToEvent($eventId, $attendee);
-
         $dto = new LoadRelationAndCountFromRequestDto(...$request->validatedToCamel());
         $attendeeWith = $attendee->loadRelationsAndCounts($dto)->firstOrFail();
 
@@ -146,18 +143,11 @@ class AttendeeController extends Controller
     #[HttpUnauthorizedResponse]
     #[HttpForbiddenResponse]
     #[HttpNotFoundResponse]
-    public function destroy(int $eventId, Attendee $attendee): Response
+    public function destroy(Event $event, Attendee $attendee): Response
     {
-        $this->attendeeBelongToEvent($eventId, $attendee);
+        $this->authorize(AbilityAttendeeEnum::DELETE->value, [$attendee, $event]);
         $attendee->delete();
 
         return response()->noContent();
-    }
-
-    protected function attendeeBelongToEvent(int $eventId, Attendee $attendee): void
-    {
-        if ($attendee->event_id !== $eventId) {
-            abort(404, 'Attendee not belong to Event with id ' . $eventId);
-        }
     }
 }

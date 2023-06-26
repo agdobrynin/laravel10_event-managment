@@ -29,4 +29,5 @@ Route::delete('/invalidate-token', [AuthController::class, 'invalidateToken'])
 
 Route::apiResource('events', EventController::class);
 Route::apiResource('events.attendees', AttendeeController::class)
+    ->scoped()
     ->except(['update']);
