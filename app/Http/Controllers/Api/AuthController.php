@@ -64,7 +64,7 @@ class AuthController extends Controller
     #[HttpUnauthorizedResponse]
     public function invalidateToken(Request $request): Response
     {
-        $request->user()->tokens()->delete();
+        $request->user()->currentAccessToken()->delete();
 
         return response()->noContent();
     }
