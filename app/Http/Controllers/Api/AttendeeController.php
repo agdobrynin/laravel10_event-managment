@@ -65,7 +65,7 @@ class AttendeeController extends Controller
         $dto = new LoadRelationAndCountFromRequestDto(...$request->validatedToCamel());
 
         $attendees = Attendee::byEventId($eventId)
-            ->loadRelationsAndCounts($dto)
+            ->relationsAndCounts($dto)
             ->paginate();
 
         return AttendeeResource::collection($attendees);
@@ -118,9 +118,9 @@ class AttendeeController extends Controller
     public function show(AttendeeLoadRelationRequest $request, Event $event, Attendee $attendee): AttendeeResource
     {
         $dto = new LoadRelationAndCountFromRequestDto(...$request->validatedToCamel());
-        $attendeeWith = $attendee->loadRelationsAndCounts($dto)->firstOrFail();
+        $attendee->loadRelationsAndCount($dto);
 
-        return new AttendeeResource($attendeeWith);
+        return new AttendeeResource($attendee);
     }
 
     #[OA\Delete(

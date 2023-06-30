@@ -91,8 +91,8 @@ class AttendeeControllerTest extends TestCase
 
     public function testAttendeeShowSuccess(): void
     {
-        $event = $this->makeEventWithAttendees(1);
-        $attendee = $event->attendees->first();
+        $event = $this->makeEventWithAttendees(5);
+        $attendee = $event->attendees->last();
 
         $this->getJson("/api/events/{$event->id}/attendees/{$attendee->id}")
             ->assertOk()

@@ -8,16 +8,27 @@ use Illuminate\Database\Eloquent\Builder;
 
 trait LoadRelationsAndCounts
 {
-    public function scopeLoadRelationsAndCounts(Builder $builder, LoadRelationAndCountFromRequestDto $dto): Builder
+    public function scopeRelationsAndCounts(Builder $builder, LoadRelationAndCountFromRequestDto $dto): Builder
     {
         return $builder
             ->when(
                 $dto->relation,
-                fn($q) => $q->with($dto->relation)
+                fn(Builder $q) => $q->with($dto->relation)
             )
             ->when(
                 $dto->withCount,
-                fn($q) => $q->withCount($dto->withCount)
+                fn(Builder $q) => $q->withCount($dto->withCount)
             );
+    }
+
+    public function loadRelationsAndCount(LoadRelationAndCountFromRequestDto $dto): void
+    {
+        if ($dto->relation) {
+            $this->load($dto->relation);
+        }
+
+        if ($dto->withCount) {
+            $this->loadCount($dto->withCount);
+        }
     }
 }

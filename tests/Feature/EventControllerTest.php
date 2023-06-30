@@ -180,7 +180,7 @@ class EventControllerTest extends TestCase
     {
         User::factory()
             ->has(
-                Event::factory()
+                Event::factory(3)
                     ->has(
                         Attendee::factory(4)
                             ->for(User::factory())
@@ -188,7 +188,7 @@ class EventControllerTest extends TestCase
             )
             ->create();
 
-        $event = Event::all()->first();
+        $event = Event::all()->last();
 
         $this->getJson('/api/events/' . $event->id)
             ->assertOk()

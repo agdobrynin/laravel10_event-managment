@@ -57,7 +57,7 @@ class EventController extends Controller
             ...$requestRelation->validatedToCamel(), ...$requestCount->validatedToCamel()
         );
 
-        $query = Event::loadRelationsAndCounts($dto)
+        $query = Event::relationsAndCounts($dto)
             ->sortByStartTime();
 
         return EventResource::collection($query->get());
@@ -121,9 +121,9 @@ class EventController extends Controller
             ...$requestRelation->validatedToCamel(), ...$requestCount->validatedToCamel()
         );
 
-        $eventWith = $event->loadRelationsAndCounts($dto)->first();
+        $event->loadRelationsAndCount($dto);
 
-        return new EventResource($eventWith);
+        return new EventResource($event);
     }
 
     #[OA\Put(
