@@ -3,9 +3,9 @@
 namespace App\Console\Commands;
 
 use App\Enum\EventLoadRelationEnum;
+use App\Jobs\UserNotification;
 use App\Models\Attendee;
 use App\Models\Event;
-use App\Notifications\EventReminderNotification;
 use Illuminate\Console\Command;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Str;
@@ -43,11 +43,16 @@ class SendEventReminders extends Command
         foreach ($events as $event) {
             /** @var Attendee $attendee */
             foreach ($event->attendees as $attendee) {
-                $attendee->user->notify(new EventReminderNotification($event));
+                UserNotification::dispatch(
+                    $event,
+                    $attendee->user,
+                    config('app.user_notify.tries')
+                )
+                    ->onQueue(config('app.user_notify.queue_name'));
             }
 
             $attendeeCount = $event->attendees->count();
-            $this->info("Notify about event \"{$event->name}\" was sent for {$attendeeCount} ".Str::plural('user', $attendeeCount));
+            $this->info("Create {$attendeeCount} " . Str::plural('job', $attendeeCount) . " for notify about event \"{$event->name}\"");
         }
     }
 }

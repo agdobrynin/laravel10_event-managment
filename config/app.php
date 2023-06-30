@@ -184,5 +184,14 @@ return [
     'aliases' => Facade::defaultAliases()->merge([
         // 'Example' => App\Facades\Example::class,
     ])->toArray(),
-
+    // Notify user about coming soon event.
+    'user_notify' => [
+        // How many notification send per minutes.
+        'per_minute' => env('USER_NOTIFY_JOBS_PER_MINUTE', 20),
+        // How many tries for each job.
+        'tries' => env('USER_NOTIFY_JOBS_TRIES' ,3),
+        // Queue name for job.
+        'queue_name' => env('USER_NOTIFY_JOBS_QUEUE_NAME' ,'user-notify'),
+    ],
+    //'rate_limit_user_notify_per_minute' =>
 ];
