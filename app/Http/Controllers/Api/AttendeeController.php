@@ -28,6 +28,9 @@ class AttendeeController extends Controller
     {
         $this->middleware(['auth:sanctum'])
             ->except(['index', 'show']);
+
+        $this->middleware('throttle:api')
+            ->only(['store', 'destroy']);
     }
 
     #[OA\Get(

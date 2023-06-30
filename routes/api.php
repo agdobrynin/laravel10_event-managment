@@ -17,15 +17,19 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
-});
+Route::middleware('throttle:api')->group(function () {
+    Route::get('/user', function(Request $request) {
+        return $request->user();
+    })
+        ->middleware('auth:sanctum');
 
-Route::post('/take-token', [AuthController::class, 'takeToken'])
-    ->name('auth.take-token');
-Route::delete('/invalidate-token', [AuthController::class, 'invalidateToken'])
-    ->name('auth.invalidate-token')
-    ->middleware('auth:sanctum');
+    Route::post('/take-token', [AuthController::class, 'takeToken'])
+        ->name('auth.take-token');
+
+    Route::delete('/invalidate-token', [AuthController::class, 'invalidateToken'])
+        ->name('auth.invalidate-token')
+        ->middleware('auth:sanctum');
+});
 
 Route::apiResource('events', EventController::class);
 Route::apiResource('events.attendees', AttendeeController::class)
